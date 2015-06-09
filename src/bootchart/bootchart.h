@@ -27,7 +27,8 @@
 #include <stdbool.h>
 #include "list.h"
 
-#define HACK_LIST_PARAMETERS 1          /* Revert effect of commit 71fda00f320379f5cbee8e118848de98caaa229d */
+#define HACK_BOOTCHART_ON_SYSTEMD_V204 1	/* Hack bootchart to allow backporting to systemd v204 */
+#define HACK_LIST_PARAMETERS 1          	/* Revert effect of commit 71fda00f320379f5cbee8e118848de98caaa229d */
 
 #define MAXCPUS        16
 #define MAXPIDS     65535

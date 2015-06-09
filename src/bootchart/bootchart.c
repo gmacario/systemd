@@ -508,8 +508,15 @@ int main(int argc, char *argv[]) {
         ps = ps_first;
         while (ps->next_ps) {
                 ps = ps->next_ps;
+#ifdef HACK_BOOTCHART_ON_SYSTEMD_V204
+                if (ps->schedstat >= 0)
+                        close(ps->schedstat);
+                if (ps->sched >= 0)
+                        close(ps->sched);
+#else
                 ps->schedstat = safe_close(ps->schedstat);
                 ps->sched = safe_close(ps->sched);
+#endif
                 if (ps->smaps) {
                         fclose(ps->smaps);
                         ps->smaps = NULL;

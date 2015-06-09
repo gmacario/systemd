@@ -135,9 +135,23 @@ static void parse_conf(void) {
                 { NULL, NULL, NULL, 0, NULL }
         };
 
+#ifdef HACK_BOOTCHART_ON_SYSTEMD_V204
+        _cleanup_fclose_ FILE *f;
+        int r;
+
+        f = fopen(BOOTCHART_CONF, "re");
+        if (!f)
+                return;
+
+        r = config_parse(NULL, BOOTCHART_CONF, f,
+                         NULL, config_item_table_lookup, (void*) items, true, false, NULL, NULL, 0);
+        if (r < 0)
+                log_warning("Failed to parse configuration file: %s", strerror(-r));
+#else
         config_parse_many(BOOTCHART_CONF,
                           CONF_DIRS_NULSTR("systemd/bootchart.conf"),
                           NULL, config_item_table_lookup, items, true, NULL);
+#endif
 
         if (init != NULL)
                 strscpy(arg_init_path, sizeof(arg_init_path), init);

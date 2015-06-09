@@ -223,8 +223,8 @@ static int parse_argv(int argc, char *argv[]) {
                 case 'f':
                         r = safe_atod(optarg, &arg_hz);
                         if (r < 0)
-                                log_warning_errno(r, "failed to parse --freq/-f argument '%s': %m",
-                                                  optarg);
+                                log_warning("failed to parse --freq/-f argument '%s': %s",
+                                            optarg, strerror(-r));
                         break;
                 case 'F':
                         arg_filter = false;
@@ -238,8 +238,8 @@ static int parse_argv(int argc, char *argv[]) {
                 case 'n':
                         r = safe_atoi(optarg, &arg_samples_len);
                         if (r < 0)
-                                log_warning_errno(r, "failed to parse --samples/-n argument '%s': %m",
-                                                  optarg);
+                                log_warning("failed to parse --samples/-n argument '%s': %s",
+                                            optarg, strerror(-r));
                         break;
                 case 'o':
                         path_kill_slashes(optarg);
@@ -255,14 +255,14 @@ static int parse_argv(int argc, char *argv[]) {
                 case 'x':
                         r = safe_atod(optarg, &arg_scale_x);
                         if (r < 0)
-                                log_warning_errno(r, "failed to parse --scale-x/-x argument '%s': %m",
-                                                  optarg);
+                                log_warning("failed to parse --scale-x/-x argument '%s': %s",
+                                            optarg, strerror(-r));
                         break;
                 case 'y':
                         r = safe_atod(optarg, &arg_scale_y);
                         if (r < 0)
-                                log_warning_errno(r, "failed to parse --scale-y/-y argument '%s': %m",
-                                                  optarg);
+                                log_warning("failed to parse --scale-y/-y argument '%s': %s",
+                                            optarg, strerror(-r));
                         break;
                 case 'e':
                         arg_entropy = true;

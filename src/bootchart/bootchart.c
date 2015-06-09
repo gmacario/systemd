@@ -320,11 +320,11 @@ static int do_journal_append(char *file) {
 
         fd = open(file, O_RDONLY|O_CLOEXEC);
         if (fd < 0)
-                return log_error_errno(errno, "Failed to open bootchart data \"%s\": %m", file);
+                return log_error("Failed to open bootchart data \"%s\": %s", file, strerror(errno));
 
         n = loop_read(fd, p + 10, BOOTCHART_MAX, false);
         if (n < 0)
-                return log_error_errno(n, "Failed to read bootchart data: %m");
+                return log_error("Failed to read bootchart data: %s", strerror(-n));
 
         iovec[j].iov_base = p;
         iovec[j].iov_len = 10 + n;
@@ -332,7 +332,7 @@ static int do_journal_append(char *file) {
 
         r = sd_journal_sendv(iovec, j);
         if (r < 0)
-                log_error_errno(r, "Failed to send bootchart: %m");
+                log_error("Failed to send bootchart: %s", strerror(-r));
 
         return 0;
 }
@@ -489,7 +489,7 @@ int main(int argc, char *argv[]) {
                                         /* caught signal, probably HUP! */
                                         break;
                                 }
-                                log_error_errno(errno, "nanosleep() failed: %m");
+                                log_error("nanosleep() failed: %s", strerror(errno));
                                 return EXIT_FAILURE;
                         }
                 } else {
@@ -535,7 +535,7 @@ int main(int argc, char *argv[]) {
                    log_start, interval, overrun);
 
         if (r < 0) {
-                log_error_errno(r, "Error generating svg file: %m");
+                log_error("Error generating svg file: %s", strerror(-r));
                 return EXIT_FAILURE;
         }
 

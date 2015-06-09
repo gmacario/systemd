@@ -126,7 +126,7 @@ int log_sample(DIR *proc,
                 /* block stuff */
                 vmstat = openat(procfd, "vmstat", O_RDONLY|O_CLOEXEC);
                 if (vmstat < 0)
-                        return log_error_errno(errno, "Failed to open /proc/vmstat: %m");
+                        return log_error("Failed to open /proc/vmstat: %s", strerror(errno));
         }
 
         n = pread(vmstat, buf, sizeof(buf) - 1, 0);
@@ -159,7 +159,7 @@ vmstat_next:
                 /* overall CPU utilization */
                 schedstat = openat(procfd, "schedstat", O_RDONLY|O_CLOEXEC);
                 if (schedstat < 0)
-                        return log_error_errno(errno, "Failed to open /proc/schedstat (requires CONFIG_SCHEDSTATS=y in kernel config): %m");
+                        return log_error("Failed to open /proc/schedstat (requires CONFIG_SCHEDSTATS=y in kernel config): %s", strerror(errno));
         }
 
         n = pread(schedstat, buf, sizeof(buf) - 1, 0);
@@ -200,7 +200,7 @@ schedstat_next:
                 if (e_fd < 0) {
                         e_fd = openat(procfd, "sys/kernel/random/entropy_avail", O_RDONLY|O_CLOEXEC);
                         if (e_fd < 0)
-                                return log_error_errno(errno, "Failed to open /proc/sys/kernel/random/entropy_avail: %m");
+                                return log_error("Failed to open /proc/sys/kernel/random/entropy_avail: %s", strerror(errno));
                 }
 
                 n = pread(e_fd, buf, sizeof(buf) - 1, 0);

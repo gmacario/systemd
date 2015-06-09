@@ -381,7 +381,11 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
         }
 
+#ifdef HACK_LIST_PARAMETERS
+        LIST_HEAD_INIT(struct list_sample_data, head);
+#else
         LIST_HEAD_INIT(head);
+#endif
 
         /* main program loop */
         for (samples = 0; !exiting && samples < arg_samples_len; samples++) {
@@ -454,7 +458,11 @@ int main(int argc, char *argv[]) {
                         /* calculate how many samples we lost and scrap them */
                         arg_samples_len -= (int)(newint_ns / interval);
                 }
+#ifdef HACK_LIST_PARAMETERS
+                LIST_PREPEND(struct list_sample_data, link, head, sampledata);
+#else
                 LIST_PREPEND(link, head, sampledata);
+#endif
         }
 
         /* do some cleanup, close fd's */

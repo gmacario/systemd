@@ -77,7 +77,11 @@ static void svg_header(FILE *of, struct list_sample_data *head, double graph_sta
         assert(head);
 
         sampledata = head;
+#ifdef HACK_LIST_PARAMETERS
+        LIST_FIND_TAIL(struct list_sample_data, link, sampledata, head);
+#else
         LIST_FIND_TAIL(link, sampledata, head);
+#endif
         sampledata_last = head;
         LIST_FOREACH_BEFORE(link, sampledata, head) {
                 sampledata_last = sampledata;

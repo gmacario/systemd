@@ -72,6 +72,26 @@ static int exiting = 0;
 #endif
 #define DEFAULT_OUTPUT "/run/log"
 
+#ifndef CONF_DIRS_NULSTR
+/* Adapted from post-v204 src/shared/macro.h */
+
+/* Return a nulstr for a standard cascade of configuration directories,
+ * suitable to pass to conf_files_list_nulstr or config_parse_many. */
+#define CONF_DIRS_NULSTR(n) \
+        "/etc/" n ".d\0" \
+        "/run/" n ".d\0" \
+        "/usr/local/lib/" n ".d\0" \
+        "/usr/lib/" n ".d\0" \
+        CONF_DIR_SPLIT_USR(n)
+
+#ifdef HAVE_SPLIT_USR
+#define CONF_DIR_SPLIT_USR(n) "/lib/" n ".d\0"
+#else
+#define CONF_DIR_SPLIT_USR(n)
+#endif
+
+#endif	/* ndef CONF_DIRS_NULSTR */
+
 /* graph defaults */
 bool arg_entropy = false;
 bool arg_initcall = true;

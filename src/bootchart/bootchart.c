@@ -64,7 +64,12 @@ static int exiting = 0;
 #define DEFAULT_HZ 25.0
 #define DEFAULT_SCALE_X 100.0 /* 100px = 1sec */
 #define DEFAULT_SCALE_Y 20.0  /* 16px = 1 process bar */
+#ifndef ROOTLIBEXECDIR
+/* Revert to v204 behaviour */
+#define DEFAULT_INIT "/sbin/init"
+#else
 #define DEFAULT_INIT ROOTLIBEXECDIR "/systemd"
+#endif
 #define DEFAULT_OUTPUT "/run/log"
 
 /* graph defaults */

@@ -92,9 +92,16 @@ static void svg_header(FILE *of, struct list_sample_data *head, double graph_sta
         w = ((w < 1600.0) ? 1600.0 : w);
 
         /* height is variable based on pss, psize, ksize */
+#if 1
+        /* FIXME: Should find a proper algorithm - for the time being just multiply header x cpus */
+        h = 400.0 + (arg_scale_y * 30.0 * (arg_percpu ? 4 /* FIXME: n_cpus */ : 1)) /* base graphs and title */
+            + (arg_pss ? (100.0 * arg_scale_y) + (arg_scale_y * 7.0) : 0.0) /* pss estimate */
+            + psize + ksize + esize;
+#else
         h = 400.0 + (arg_scale_y * 30.0) /* base graphs and title */
             + (arg_pss ? (100.0 * arg_scale_y) + (arg_scale_y * 7.0) : 0.0) /* pss estimate */
             + psize + ksize + esize;
+#endif
 
         fprintf(of, "<?xml version=\"1.0\" standalone=\"no\"?>\n");
         fprintf(of, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" ");

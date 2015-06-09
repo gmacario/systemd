@@ -131,10 +131,16 @@ int log_sample(DIR *proc,
 
         n = pread(vmstat, buf, sizeof(buf) - 1, 0);
         if (n <= 0) {
+#ifdef HACK_BOOTCHART_ON_SYSTEMD_V204
+                close(vmstat);
+                vmstat = -1;
+                return -ENODATA;
+#else
                 vmstat = safe_close(vmstat);
                 if (n < 0)
                         return -errno;
                 return -ENODATA;
+#endif
         }
 
         buf[n] = '\0';
@@ -164,10 +170,16 @@ vmstat_next:
 
         n = pread(schedstat, buf, sizeof(buf) - 1, 0);
         if (n <= 0) {
+#ifdef HACK_BOOTCHART_ON_SYSTEMD_V204
+                close(schedstat);
+                schedstat = -1;
+                return -ENODATA;
+#else
                 schedstat = safe_close(schedstat);
                 if (n < 0)
                         return -errno;
                 return -ENODATA;
+#endif
         }
 
         buf[n] = '\0';
@@ -205,7 +217,11 @@ schedstat_next:
 
                 n = pread(e_fd, buf, sizeof(buf) - 1, 0);
                 if (n <= 0) {
+#ifdef HACK_BOOTCHART_ON_SYSTEMD_V204
+                        e_fd = close(e_fd);
+#else
                         e_fd = safe_close(e_fd);
+#endif
                 } else {
                         buf[n] = '\0';
                         sampledata->entropy_avail = atoi(buf);
@@ -271,7 +287,11 @@ schedstat_next:
 
                         s = pread(ps->sched, buf, sizeof(buf) - 1, 0);
                         if (s <= 0) {
+#ifdef HACK_BOOTCHART_ON_SYSTEMD_V204
+                                ps->sched = close(ps->sched);
+#else
                                 ps->sched = safe_close(ps->sched);
+#endif
                                 continue;
                         }
                         buf[s] = '\0';
@@ -382,7 +402,11 @@ schedstat_next:
                         /* clean up our file descriptors - assume that the process exited */
                         close(ps->schedstat);
                         ps->schedstat = -1;
+#ifdef HACK_BOOTCHART_ON_SYSTEMD_V204
+                        ps->sched = close(ps->sched);
+#else
                         ps->sched = safe_close(ps->sched);
+#endif
                         continue;
                 }
 
@@ -486,8 +510,13 @@ catch_rename:
                         s = pread(ps->sched, buf, sizeof(buf) - 1, 0);
                         if (s <= 0) {
                                 /* clean up file descriptors */
+#ifdef HACK_BOOTCHART_ON_SYSTEMD_V204
+                                ps->sched = close(ps->sched);
+                                ps->schedstat = close(ps->schedstat);
+#else
                                 ps->sched = safe_close(ps->sched);
                                 ps->schedstat = safe_close(ps->schedstat);
+#endif
                                 continue;
                         }
 

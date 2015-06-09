@@ -1040,8 +1040,10 @@ static void svg_ps_bars(FILE *of,
                 double starttime;
                 int t;
 
+#ifndef HACK_BOOTCHART_ON_SYSTEMD_V204
                 if (!utf8_is_printable(ps->name, strlen(ps->name)))
                         escaped = utf8_escape_non_printable(ps->name);
+#endif
 
                 enc_name = xml_comment_encode(escaped ? escaped : ps->name);
                 if (!enc_name)

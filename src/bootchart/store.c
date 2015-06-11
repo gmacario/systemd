@@ -22,6 +22,8 @@
   along with systemd; If not, see <http://www.gnu.org/licenses/>.
  ***/
 
+#define DEBUG_BOOTCHART_LOG_SAMPLE 1
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -115,6 +117,10 @@ int log_sample(DIR *proc,
         struct list_sample_data *sampledata;
         struct ps_sched_struct *ps_prev = NULL;
         int procfd;
+
+#ifdef DEBUG_BOOTCHART_LOG_SAMPLE
+        printf("DEBUG: BEGIN log_sample(proc=%p, sample=%d, ps_first=%p, ptr=%p, pscount=%p, cpus=%p)\n", proc, sample, ps_first, ptr, pscount, cpus);
+#endif
 
         sampledata = *ptr;
 
@@ -233,10 +239,18 @@ schedstat_next:
                 int pid;
                 struct ps_struct *ps;
 
+#if 0 /* def DEBUG_BOOTCHART_LOG_SAMPLE */
+                printf("DEBUG: %s:%d: ent=%p\n", __FILE__, __LINE__, ent);
+#endif
+
                 if ((ent->d_name[0] < '0') || (ent->d_name[0] > '9'))
                         continue;
 
                 pid = atoi(ent->d_name);
+
+#if 0 /* def DEBUG_BOOTCHART_LOG_SAMPLE */
+                printf("DEBUG: %s:%d: Got pid=%d\n", __FILE__, __LINE__, pid);
+#endif
 
                 if (pid >= MAXPIDS)
                         continue;
@@ -247,6 +261,10 @@ schedstat_next:
                         if (ps->pid == pid)
                                 break;
                 }
+
+#if 0 /* def DEBUG_BOOTCHART_LOG_SAMPLE */
+                printf("DEBUG: %s:%d: Got ps->pid=%d, pid=%d\n", __FILE__, __LINE__, ps->pid, pid);
+#endif
 
                 /* end of our LL? then append a new record */
                 if (ps->pid != pid) {
@@ -271,6 +289,10 @@ schedstat_next:
                         ps->sample->sampledata = sampledata;
 
                         (*pscount)++;
+
+#ifdef DEBUG_BOOTCHART_LOG_SAMPLE
+                        printf("DEBUG: %s:%d: *pscount=%d\n", __FILE__, __LINE__, *pscount);
+#endif
 
                         /* mark our first sample */
                         ps->first = ps->last = ps->sample;
@@ -397,13 +419,53 @@ schedstat_next:
                                 continue;
                 }
 
+#ifdef DEBUG_BOOTCHART_LOG_SAMPLE
+#define DEBUG_WATCH_PID 2318
+                if (pid == DEBUG_WATCH_PID) {
+                        printf("DEBUG: %s:%d: Case pid=%d\n", __FILE__, __LINE__, pid);
+                        printf("DEBUG: %s:%d: pid=%d, ps=%p, ps->name=%s, ps->children=%p\n", __FILE__, __LINE__,
+                                pid, ps, ps->name, ps->children);
+                        //struct ps_struct *childp = ps->children;
+                        //while (childp) {
+                        //        printf("DEBUG: %s:%d: childp=%p, childp->name=%s, childp->next=%p\n",
+                        //                __FILE__, __LINE__, childp, childp->name, childp->next);
+                        //}
+
+                        /* DEBUG 2015-06-11 08:56 CEST */
+                        printf("DEBUG: %s:%d: pid=%d, ps->schedstat=%d, ps->sample=%p, ps->last=%p\n",
+                                __FILE__, __LINE__,
+                                pid, ps->schedstat, ps->sample, ps->last);
+                }
+
+                // TODO: Should also parse "/proc/pid/task/tid/schedstat"
+
+                // Parse directory "/proc/[pid]/task"
+                //sprintf(filename, "%d/task", pid);
+                //int taskd = openat(procfd, filename, O_RDONLY|O_CLOEXEC);
+                //if (taskd < 0)
+                //      continue;
+
+                //while ((ent = readdir(taskd)) != NULL) {
+                //        printf("DEBUG: %s:%d: pid=%d, taskd=%d, ent=%p\n", __FILE__, __LINE__, pid, taskd, ent);
+                //
+                //        if ((ent->d_name[0] < '0') || (ent->d_name[0] > '9'))
+                //            continue;
+                //        int tid = atoi(ent->d_name);
+                //        printf("DEBUG: %s:%d: Got tid=%d", __FILE__, __LINE__, tid);
+                //
+                //        // TODO
+                //}
+
+#endif
+
                 s = pread(ps->schedstat, buf, sizeof(buf) - 1, 0);
                 if (s <= 0) {
                         /* clean up our file descriptors - assume that the process exited */
                         close(ps->schedstat);
                         ps->schedstat = -1;
 #ifdef HACK_BOOTCHART_ON_SYSTEMD_V204
-                        ps->sched = close(ps->sched);
+                        close(ps->sched);
+                        ps->sched = -1;
 #else
                         ps->sched = safe_close(ps->sched);
 #endif

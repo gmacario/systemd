@@ -25,10 +25,15 @@
 ***/
 
 #include <stdbool.h>
+#include "config.h"
 #include "list.h"
 
+/* #if ((VERSION[0] == '2') && (VERSION[1] == '0') && (VERSION[3] == '4') && (VERSION[4] == '\0')) */
+#ifndef ENABLE_KDBUS				/* Test for something not defined in v204 */
+#pragma message("Hacks for backporting systemd-bootchart to VERSION=" VERSION)
 #define HACK_BOOTCHART_ON_SYSTEMD_V204 1	/* Hack bootchart to allow backporting to systemd v204 */
 #define HACK_LIST_PARAMETERS 1          	/* Revert effect of commit 71fda00f320379f5cbee8e118848de98caaa229d */
+#endif
 
 #define MAXCPUS        16
 #define MAXPIDS     65535

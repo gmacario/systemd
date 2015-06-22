@@ -22,7 +22,7 @@
   along with systemd; If not, see <http://www.gnu.org/licenses/>.
  ***/
 
-#define DEBUG_BOOTCHART_LOG_SAMPLE 1
+/* #define DEBUG_BOOTCHART_LOG_SAMPLE 1 */
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -419,24 +419,6 @@ schedstat_next:
                                 continue;
                 }
 
-#if 0 /* def DEBUG_BOOTCHART_LOG_SAMPLE */
-#define DEBUG_WATCH_PID 2318
-                if (pid == DEBUG_WATCH_PID) {
-                        printf("DEBUG: %s:%d: Case pid=%d\n", __FILE__, __LINE__, pid);
-                        printf("DEBUG: %s:%d: pid=%d, ps=%p, ps->name=%s, ps->children=%p\n", __FILE__, __LINE__,
-                                pid, ps, ps->name, ps->children);
-                        //struct ps_struct *childp = ps->children;
-                        //while (childp) {
-                        //        printf("DEBUG: %s:%d: childp=%p, childp->name=%s, childp->next=%p\n",
-                        //                __FILE__, __LINE__, childp, childp->name, childp->next);
-                        //}
-
-                        /* DEBUG 2015-06-11 08:56 CEST */
-                        printf("DEBUG: %s:%d: pid=%d, ps->schedstat=%d, ps->sample=%p, ps->last=%p\n",
-                                __FILE__, __LINE__, pid, ps->schedstat, ps->sample, ps->last);
-                }
-#endif
-
                 s = pread(ps->schedstat, buf, sizeof(buf) - 1, 0);
                 if (s <= 0) {
                         /* clean up our file descriptors - assume that the process exited */
@@ -475,7 +457,7 @@ schedstat_next:
                             / 1000000000.0;
 
 #if 1 /* Fix for systemd issue #139 */
-                // Take into CPU runtime/waittime spent in non-main threads of the process
+                // Take into account CPU runtime/waittime spent in non-main threads of the process
                 // by parsing "/proc/[pid]/task/[tid]/schedstat" for all [tid] != [pid]
                 // See https://github.com/systemd/systemd/issues/139
 
@@ -484,11 +466,8 @@ schedstat_next:
 
                 int taskfd = openat(procfd, filename, O_RDONLY|O_DIRECTORY);
                 DIR *taskdir = fdopendir(taskfd);
-                //printf("DEBUG: %s:%d: pid=%d, taskfd=%d, taskdir=%p\n", __FILE__, __LINE__, pid, taskfd, taskdir);
 
                 while ((ent = readdir(taskdir)) != NULL) {
-                        //printf("DEBUG: %s:%d: pid=%d, ent=%p, ent->d_name=%s\n", __FILE__, __LINE__, pid, ent, ent->d_name);
-
                         if ((ent->d_name[0] < '0') || (ent->d_name[0] > '9'))
                                 continue;
 
@@ -496,9 +475,6 @@ schedstat_next:
                         int tid = atoi(ent->d_name);
                         if (tid == pid)
                                 continue;
-
-                        //printf("DEBUG: %s:%d: Add CPU runtime/waittime for subthread tid=%d of pid=%d (%s)\n",
-                        //    __FILE__, __LINE__, tid, pid, ps->name);
 
                         // Parse "/proc/[pid]/task/[tid]/schedstat"
                         sprintf(filename, "%d/schedstat", tid);
@@ -514,7 +490,6 @@ schedstat_next:
                         if (!sscanf(buf, "%s %s %*s", rt, wt))
                                 continue;
 
-                        //printf("DEBUG: %s:%d: pid=%d, tid=%d: Adding rt=%s, wt=%s\n", __FILE__, __LINE__, pid, tid, rt, wt);
                         ps->sample->runtime  += atoll(rt);
                         ps->sample->waittime += atoll(wt);
 

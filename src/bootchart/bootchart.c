@@ -299,12 +299,12 @@ static int do_journal_append(char *file) {
 }
 
 int main(int argc, char *argv[]) {
-        static struct list_sample_data *sampledata;
+        struct list_sample_data *sampledata = NULL;
         _cleanup_closedir_ DIR *proc = NULL;
         _cleanup_free_ char *build = NULL;
         _cleanup_fclose_ FILE *of = NULL;
         _cleanup_close_ int sysfd = -1;
-        struct ps_struct *ps_first;
+        struct ps_struct *ps_first = NULL;
         double graph_start;
         double log_start;
         double interval;
@@ -315,9 +315,9 @@ int main(int argc, char *argv[]) {
         int overrun = 0;
         time_t t = 0;
         int r, samples;
-        struct ps_struct *ps;
+        struct ps_struct *ps = NULL;
         struct rlimit rlim;
-        struct list_sample_data *head;
+        struct list_sample_data *head = NULL;
         struct sigaction sig = {
                 .sa_handler = signal_handler,
         };
@@ -454,7 +454,12 @@ int main(int argc, char *argv[]) {
                         /* calculate how many samples we lost and scrap them */
                         arg_samples_len -= (int)(newint_ns / interval);
                 }
+                //printf("DEBUG: %s:%d (%s): sampledata=%p, sampledata->counter=%d, sampledata->sampletime=%lf\n",
+                //        __FILE__, __LINE__, __func__, sampledata, sampledata->counter, sampledata->sampletime);
+                //printf("DEBUG: %s:%d (%s): Before LIST_PREPEND: head=%p, sampledata=%p\n", __FILE__, __LINE__, __func__, head, sampledata);
                 LIST_PREPEND(link, head, sampledata);
+                //printf("DEBUG: %s:%d (%s): After  LIST_PREPEND: head=%p, head->link_prev=%p, head->link_next=%p, sampledata=%p\n",
+                //        __FILE__, __LINE__, __func__, head, head->link_prev, head->link_next, sampledata);
         }
 
         /* do some cleanup, close fd's */
@@ -468,6 +473,17 @@ int main(int argc, char *argv[]) {
                         ps->smaps = NULL;
                 }
         }
+
+#if 0 /* DEBUG */
+        printf("DEBUG: %s:%d (%s): Before LIST_FOREACH: head=%p, sampledata=%p\n",
+                __FILE__, __LINE__, __func__, head, sampledata);
+        LIST_FOREACH(link, sampledata, head) {
+                printf("DEBUG: %s:%d (%s): Inside LIST_FOREACH: head=%p, sampledata=%p, sampledata->link_prev=%p, sampledata->link_next=%p, sampledata->counter=%d\n",
+                        __FILE__, __LINE__, __func__, head, sampledata, sampledata->link_prev, sampledata->link_next, sampledata->counter);
+        }
+        printf("DEBUG: %s:%d (%s): After  LIST_FOREACH: head=%p, sampledata=%p\n",
+                __FILE__, __LINE__, __func__, head, sampledata);
+#endif
 
         if (!of) {
                 t = time(NULL);

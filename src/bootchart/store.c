@@ -98,7 +98,7 @@ int log_sample(DIR *proc,
 
         static int vmstat = -1;
         static int schedstat = -1;
-        char buf[4096];
+        char buf[8192];
         char key[256];
         char val[256];
         char rt[256];
@@ -163,6 +163,10 @@ vmstat_next:
                         return log_error_errno(errno, "Failed to open /proc/schedstat (requires CONFIG_SCHEDSTATS=y in kernel config): %m");
         }
 
+#if 0
+        /* BUG! On my PC (8-cores) pread returns 3082 but
+         * `cat /proc/schedstat | wc -c` returns 5949
+         */
         n = pread(schedstat, buf, sizeof(buf) - 1, 0);
         if (n <= 0) {
                 schedstat = safe_close(schedstat);
@@ -172,6 +176,20 @@ vmstat_next:
         }
 
         buf[n] = '\0';
+#else
+        /* Fix for systemd issue TODO
+         */
+        m = buf;
+        while ((n = pread(schedstat, m, sizeof(buf) - (m-buf) - 1, m-buf)) > 0)
+                m += n;
+
+        schedstat = safe_close(schedstat);
+        if (n < 0)
+                return -errno;
+        *m = '\0';
+
+        //printf("DEBUG: %s:%d (%s): got %ld bytes: %s\n", __FILE__, __LINE__, __func__, (m-buf), buf);
+#endif
 
         m = buf;
         while (m) {

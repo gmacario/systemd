@@ -77,7 +77,10 @@ static void svg_header(FILE *of, struct list_sample_data *head, double graph_sta
         assert(head);
 
         sampledata = head;
+        //printf("DEBUG: %s:%d (%s): Before LIST_FIND_TAIL: head=%p, sampledata=%p\n", __FILE__, __LINE__, __func__, head, sampledata);
         LIST_FIND_TAIL(link, sampledata, head);
+        //printf("DEBUG: %s:%d (%s): After  LIST_FIND_TAIL: head=%p, sampledata=%p\n", __FILE__, __LINE__, __func__, head, sampledata);
+
         sampledata_last = head;
         LIST_FOREACH_BEFORE(link, sampledata, head) {
                 sampledata_last = sampledata;
@@ -234,12 +237,15 @@ static void svg_graph_box(FILE *of, struct list_sample_data *head, int height, d
         double finalsample = 0.0;
         struct list_sample_data *sampledata_last;
 
+        //printf("DEBUG: %s:%d (%s): head=%p, graph_start=%lf\n", __FILE__, __LINE__, __func__, head, graph_start);
         sampledata_last = head;
         LIST_FOREACH_BEFORE(link, sampledata, head) {
+                //printf("DEBUG: %s:%d (%s): Inside LIST_FOREACH_BEFORE: sampledata=%p\n", __FILE__, __LINE__, __func__, sampledata);
                 sampledata_last = sampledata;
         }
 
         finalsample = sampledata_last->sampletime;
+        //printf("DEBUG: %s:%d (%s): head=%p, graph_start=%lf, finalsample=%lf\n", __FILE__, __LINE__, __func__, head, graph_start, finalsample);
 
         /* outside box, fill */
         fprintf(of, "<rect class=\"box\" x=\"%.03f\" y=\"0\" width=\"%.03f\" height=\"%.03f\" />\n",
@@ -423,6 +429,8 @@ static void svg_pss_graph(FILE *of,
                 int top = 0;
                 struct ps_sched_struct *prev_sample;
                 struct ps_sched_struct *cross_place;
+
+                //printf("DEBUG: %s:%d (%s): sampledata=%p, head=%p\n", __FILE__, __LINE__, __func__, sampledata, head);
 
                 /* put all the small pss blocks into the bottom */
                 ps = ps_first->next_ps;
@@ -758,6 +766,10 @@ static void svg_io_bo_bar(FILE *of,
 
 static void svg_cpu_bar(FILE *of, struct list_sample_data *head, int n_cpus, int cpu_num, double graph_start) {
 
+        //printf("DEBUG: %s:%d (%s): head=%p, n_cpus=%d, cpu_num=%d, graph_start=%lf\n", __FILE__, __LINE__, __func__, head, n_cpus, cpu_num, graph_start);
+        //printf("DEBUG: %s:%d (%s): head->link_prev=%p\n", __FILE__, __LINE__, __func__, head->link_prev);
+        //printf("DEBUG: %s:%d (%s): head->link_next=%p\n", __FILE__, __LINE__, __func__, head->link_next);
+
         fprintf(of, "<!-- CPU utilization graph -->\n");
 
         if (cpu_num < 0)
@@ -768,8 +780,15 @@ static void svg_cpu_bar(FILE *of, struct list_sample_data *head, int n_cpus, int
         /* surrounding box */
         svg_graph_box(of, head, 5, graph_start);
 
+        //printf("DEBUG: %s:%d (%s): sampledata=%p\n", __FILE__, __LINE__, __func__, sampledata);
+        //printf("DEBUG: %s:%d (%s): prev_sampledata=%p\n", __FILE__, __LINE__, __func__, prev_sampledata);
+
         /* bars for each sample, proportional to the CPU util. */
         prev_sampledata = head;
+
+        /* BUG! If LIST_FOREACH_BEFORE is used, the loop is never executed???
+         * See https://github.com/systemd/systemd/issues/341
+         */
         LIST_FOREACH_BEFORE(link, sampledata, head) {
                 int c;
                 double trt;
@@ -777,11 +796,24 @@ static void svg_cpu_bar(FILE *of, struct list_sample_data *head, int n_cpus, int
 
                 ptrt = trt = 0.0;
 
+#if 0
+                printf("DEBUG: %s:%d (%s): sampledata=%p, prev_sampledata=%p, n_cpus=%d, cpu_num=%d\n",
+                        __FILE__, __LINE__, __func__, sampledata, prev_sampledata, n_cpus, cpu_num);
+                printf("DEBUG: %s:%d (%s): sampledata->sampletime=%lf, prev_sampledata->sampletime=%lf\n",
+                        __FILE__, __LINE__, __func__, sampledata->sampletime, prev_sampledata->sampletime);
+                for (c = (cpu_num < 0 ? 0 : cpu_num); c < (cpu_num < 0 ? n_cpus : cpu_num + 1); c++) {
+                        printf("DEBUG: %s:%d (%s): c=%d, sampledata->runtime[c]=%lf, prev_sampledata->runtime[c]=%lf\n",
+                                __FILE__, __LINE__, __func__, c, sampledata->runtime[c], prev_sampledata->runtime[c]);
+                }
+#endif
+
                 if (cpu_num < 0)
                         for (c = 0; c < n_cpus; c++)
                                 trt += sampledata->runtime[c] - prev_sampledata->runtime[c];
                 else
                         trt = sampledata->runtime[cpu_num] - prev_sampledata->runtime[cpu_num];
+
+                //printf("DEBUG: %s:%d (%s): trt=%lf, ptrt=%lf\n", __FILE__, __LINE__, __func__, trt, ptrt);
 
                 trt = trt / 1000000000.0;
 
@@ -1296,6 +1328,17 @@ int svg_do(FILE *of,
         double offset = 7;
         int r, c;
 
+        //printf("DEBUG: %s:%d (%s): head=%p\n", __FILE__, __LINE__, __func__, head);
+        //printf("DEBUG: %s:%d (%s): head->link_prev=%p\n", __FILE__, __LINE__, __func__, head->link_prev);
+        //printf("DEBUG: %s:%d (%s): head->link_next=%p\n", __FILE__, __LINE__, __func__, head->link_next);
+
+#if 1   /* Quick-and-dirty fix for issue 341 */
+        sampledata = head;
+        //printf("DEBUG: %s:%d (%s): Before LIST_FIND_TAIL: head=%p, sampledata=%p\n", __FILE__, __LINE__, __func__, head, sampledata);
+        LIST_FIND_TAIL(link, sampledata, head);
+        //printf("DEBUG: %s:%d (%s): After  LIST_FIND_TAIL: head=%p, sampledata=%p\n", __FILE__, __LINE__, __func__, head, sampledata);
+#endif
+
         ps = ps_first;
 
         /* count initcall thread count first */
@@ -1326,6 +1369,11 @@ int svg_do(FILE *of,
         fprintf(of, "</g>\n\n");
 
         for (c = -1; c < (arg_percpu ? n_cpus : 0); c++) {
+
+                //printf("DEBUG: %s:%d (%s): head=%p\n", __FILE__, __LINE__, __func__, head);
+                //printf("DEBUG: %s:%d (%s): head->link_prev=%p\n", __FILE__, __LINE__, __func__, head->link_prev);
+                //printf("DEBUG: %s:%d (%s): head->link_next=%p\n", __FILE__, __LINE__, __func__, head->link_next);
+
                 offset += 7;
                 fprintf(of, "<g transform=\"translate(10,%.03f)\">\n", 400.0 + (arg_scale_y * offset));
                 svg_cpu_bar(of, head, n_cpus, c, graph_start);

@@ -38,9 +38,12 @@
 #include "store.h"
 #include "bootchart.h"
 
+/* Collection of workarounds for systemd v204 */
 #ifndef PID_FMT
 /* Workaround for systemd v204 where PID_FMT is undefined */
 #define PID_FMT "%d"
+/* In systemd v204 safe_close is undefined */
+#define safe_close(fd) (((fd) >= 0) ? close(fd) : -1)
 #endif
 
 /*

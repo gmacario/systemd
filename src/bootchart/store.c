@@ -38,6 +38,11 @@
 #include "store.h"
 #include "bootchart.h"
 
+#ifndef PID_FMT
+/* Workaround for systemd v204 where PID_FMT is undefined */
+#define PID_FMT "%d"
+#endif
+
 /*
  * Alloc a static 4k buffer for stdio - primarily used to increase
  * PSS buffering from the default 1k stdin buffer to reduce
